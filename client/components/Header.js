@@ -1,15 +1,14 @@
-// Header.js
 import React from 'react';
 import { View, Text, Image, Button, StyleSheet, TouchableOpacity } from 'react-native';
 
-const Header = () => {
+const Header = ({ onLogout }) => {
   return (
     <View style={styles.header}>
       <Image
         source={require('./images/AppLogoV1.png')} // Make sure the path is correct
         style={styles.logo}
       />
-      <TouchableOpacity style={styles.logoutButton}>
+      <TouchableOpacity style={styles.logoutButton} onPress={() => onLogout()}>
         <Text style={styles.logoutButtonText}>LOG OUT</Text>
       </TouchableOpacity>
     </View>

@@ -1,19 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; 
 import OrderConfirmationModal from '../modals/OrderConfirmationModal';
 
-const menuItems = [
-  { id: 1, name: 'Cheeseburger', price: 0.00, description: 'Lorem ipsum dolor sit amet.' },
-  { id: 2, name: 'Scotch Eggs', price: 0.00, description: 'Lorem ipsum dolor sit amet.' },
-  { id: 3, name: 'Cauliflower Penne', price: 0.00, description: 'Lorem ipsum dolor sit amet.' },
-  { id: 4, name: 'French Toast', price: 0.00, description: 'Lorem ipsum dolor sit amet.' },
-  { id: 5, name: 'Ricotta Stuffed Ravioli', price: 0.00, description: 'Lorem ipsum dolor sit amet.' },
-];
+const MenuScreen = ({ route }) => {
+  const { restaurantId } = route.params;
+  const [restaurant, setRestaurant] = useState(null);
+  const [menuItems, setMenuItems] = useState([]);
+  const [quantities, setQuantities] = useState({});
+  const [modalVisible, setModalVisible] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-const MenuScreen = () => {
-  const [quantities, setQuantities] = useState(menuItems.reduce((acc, item) => ({ ...acc, [item.id]: 0 }), {}));
-  const [ModalVisible, setModalVisible] = useState(false);
+  useEffect(() => {
+    const fetchData = async () => {
+      await fetchRestaurantData();
+      await fetchProductData();
+      setLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
+  const fetchRestaurantData = async () => {
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_NGROK_URL}/api/restaurants`);
+      const data = await response.json();
+      const restaurantSelected = data.find((restaurant) => restaurant.id === restaurantId);
+      setRestaurant(restaurantSelected);
+    } catch (error) {
+      console.error('Error fetching restaurant data:', error);
+    }
+  };
+
+  const fetchProductData = async () => {
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_NGROK_URL}/api/products?restaurant=${restaurantId}`);
+      const data = await response.json();
+      setMenuItems(data);
+      const initialQuantities = data.reduce((acc, item) => ({ ...acc, [item.id]: 0 }), {});
+      setQuantities(initialQuantities);
+    } catch (error) {
+      console.error('Error fetching product data:', error);
+    }
+  };
 
   const incrementQuantity = (id) => {
     setQuantities((prevQuantities) => ({ ...prevQuantities, [id]: prevQuantities[id] + 1 }));
@@ -25,19 +54,25 @@ const MenuScreen = () => {
 
   const totalQuantity = Object.values(quantities).reduce((sum, qty) => sum + qty, 0);
 
-  const oderSummary = menuItems
-  .filter((item) => quantities[item.id] > 0)
-  .map((item) => ({
-    ...item,
-    quantity: quantities[item.id],
-  }));
+  const orderSummary = menuItems
+    .filter((item) => quantities[item.id] > 0)
+    .map((item) => ({
+      ...item,
+      quantity: quantities[item.id],
+    }));
+
+  const totalPrice = () => {
+    return orderSummary.reduce((total, item) => {
+      return total + (item.cost * (quantities[item.id] || 0)) / 100;
+    }, 0).toFixed(2);
+  };
 
   const renderItem = ({ item }) => (
     <View style={styles.menuItem}>
       <Image source={require('../images/RestaurantMenu.jpg')} style={styles.menuImage} />
       <View style={styles.menuDetails}>
         <Text style={styles.menuName}>{item.name}</Text>
-        <Text style={styles.menuPrice}>${item.price.toFixed(2)}</Text>
+        <Text style={styles.menuPrice}>${(item.cost / 100).toFixed(2)}</Text>
         <Text style={styles.menuDescription}>{item.description}</Text>
       </View>
       <View style={styles.quantityControl}>
@@ -52,11 +87,31 @@ const MenuScreen = () => {
     </View>
   );
 
+  const getPriceRange = (priceRange) => {
+    return "$".repeat(priceRange);
+  };
+
+  const getStarRating = (rating) => {
+    return "⭐️".repeat(rating);
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#0000ff" />
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <Text style={styles.header}>MENU</Text>
-      <Text style={styles.restaurantName}>Resto</Text>
-      <Text style={styles.restaurantDetails}>Price: $ | Rating: ★★★★☆</Text>
+      {restaurant && (
+        <>
+          <Text style={styles.restaurantName}>{restaurant.name}</Text>
+          <Text style={styles.restaurantDetails}>Price: {getPriceRange(restaurant.price_range)} | Rating: {getStarRating(restaurant.rating)}</Text>
+        </>
+      )}
       <FlatList
         data={menuItems}
         renderItem={renderItem}
@@ -71,9 +126,10 @@ const MenuScreen = () => {
       </TouchableOpacity>
 
       <OrderConfirmationModal
-        visible={ModalVisible}
+        visible={modalVisible}
         onClose={() => setModalVisible(false)}
-        orderSummary={oderSummary}
+        orderSummary={orderSummary}
+        totalPrice={totalPrice()}
       />
     </View>
   );
@@ -154,6 +210,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     color: '#fff',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
 });
 

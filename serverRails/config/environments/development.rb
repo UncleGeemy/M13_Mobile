@@ -3,7 +3,7 @@ require "active_support/core_ext/integer/time"
 Rails.application.configure do
   #################################################################################
   # The redirection from ngrok to localhost important to delete before production #
-  config.hosts << "d8a5-2607-fa49-303c-f200-9970-2bc2-a682-82d1.ngrok-free.app"
+  config.hosts << "6e3d-2607-fa49-303c-f200-9cf2-ad2c-34df-bd73.ngrok-free.app"
   # config.hosts.clear
   #################################################################################
 

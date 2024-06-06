@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, Button, StyleSheet } from 'react-native';
 
-const LoginScreen = () => {
+
+const LoginScreen = ({ onLogin }) => {
   const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+    email: 'erica.ger@gmail.com',
+    password: 'password',
   });
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -15,9 +16,24 @@ const LoginScreen = () => {
     });
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     // Handle form submission
-    console.log('Form submitted', formData);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_NGROK_URL}/api/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+      const data = await response.json();
+      console.log(data);
+      if (data.success === true) {
+       onLogin()
+      } else {
+        setErrorMessage("Invalid email or password");
+      }
+
+
   };
 
   return (

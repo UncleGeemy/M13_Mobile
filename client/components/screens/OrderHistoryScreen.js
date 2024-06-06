@@ -1,20 +1,29 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; 
+import { Ionicons } from '@expo/vector-icons';
+import OrderHistoryModal from '../modals/OrderHistoryModal.js';
+
 const orders = [
-  { id: 1, name: 'RestoOne', status: 'PENDING' },
-  { id: 2, name: 'RestoTwo', status: 'PENDING' },
-  { id: 3, name: 'RestoThree', status: 'PENDING' },
-  { id: 4, name: 'RestoFour', status: 'PENDING' },
+  { id: 1, name: 'Sweet Dragon', status: 'PENDING', items: [{ name: 'Cheeseburger', price: 0.50 }, { name: 'Scotch Eggs', price: 20.25 }] },
+  // Add other orders as needed
 ];
 
 const OrderHistoryScreen = () => {
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState(null);
+
   const renderOrder = ({ item }) => (
     <View style={styles.orderRow}>
       <Text style={styles.orderText}>{item.name}</Text>
       <Text style={styles.orderText}>{item.status}</Text>
-      <TouchableOpacity style={styles.viewButton} onPress={() => { /* Placeholder for modal action */ }}>
-        <Ionicons name="ios-eye" size={24} color="black" />
+      <TouchableOpacity 
+        style={styles.viewButton} 
+        onPress={() => {
+          setSelectedOrder(item);
+          setModalVisible(true);
+        }}
+      >
+        <Ionicons name="eye" size={24} color="black" />
       </TouchableOpacity>
     </View>
   );
@@ -31,6 +40,11 @@ const OrderHistoryScreen = () => {
         data={orders}
         renderItem={renderOrder}
         keyExtractor={item => item.id.toString()}
+      />
+      <OrderHistoryModal
+        visible={modalVisible}
+        order={selectedOrder}
+        onClose={() => setModalVisible(false)}
       />
     </View>
   );

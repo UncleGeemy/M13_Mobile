@@ -1,22 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import axios from 'axios';
 
-const restaurants = [
-  { id: 1, name: 'RestoOne', price: '$$', rating: 4, image: require('../images/Restaurants/cuisineGreek.jpg') },
-  { id: 2, name: 'RestoTwo', price: '$$', rating: 4, image: require('../images/Restaurants/cuisineJapanese.jpg') },
-  { id: 3, name: 'RestoThree', price: '$', rating: 3, image: require('../images/Restaurants/cuisinePasta.jpg') },
-  { id: 4, name: 'RestoFour', price: '$', rating: 4, image: require('../images/Restaurants/cuisinePizza.jpg') },
-];
+const imageMapping = {
+  1: require('../images/Restaurants/cuisineGreek.jpg'),
+  2: require('../images/Restaurants/cuisineJapanese.jpg'),
+  3: require('../images/Restaurants/cuisinePasta.jpg'),
+  4: require('../images/Restaurants/cuisinePizza.jpg'),
+  5: require('../images/Restaurants/cuisineSoutheast.jpg'),
+  6: require('../images/Restaurants/cuisineViet.jpg'),
+  7: require('../images/Restaurants/cuisineGreek.jpg'),
+  8: require('../images/Restaurants/cuisineJapanese.jpg'),
+};
 
 const RestaurantsScreen = ({ navigation }) => {
+  const [restaurants, setRestaurants] = useState([]);
   const [selectedRating, setSelectedRating] = useState('select');
   const [selectedPrice, setSelectedPrice] = useState('select');
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchRestaurants = async () => {
+      try {
+        const response = await axios.get(`${process.env.EXPO_PUBLIC_NGROK_URL}/api/restaurants`);
+        const dataWithImages = response.data.map(restaurant => ({
+          ...restaurant,
+          image: imageMapping[restaurant.id] || require('../images/RestaurantMenu.jpg'),
+        }));
+        setRestaurants(dataWithImages);
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+        setLoading(false);
+      }
+    };
+
+    fetchRestaurants();
+  }, []);
 
   const filteredRestaurants = restaurants.filter(restaurant => {
     return (
       (selectedRating === 'select' || restaurant.rating === parseInt(selectedRating)) &&
-      (selectedPrice === 'select' || restaurant.price === selectedPrice)
+      (selectedPrice === 'select' || restaurant.price_range === selectedPrice)
     );
   });
 
@@ -24,7 +50,7 @@ const RestaurantsScreen = ({ navigation }) => {
     <TouchableOpacity style={styles.card} onPress={() => navigation.navigate('RestaurantMenu', { restaurantId: item.id })}>
       <Image source={item.image} style={styles.image} />
       <Text style={styles.name}>{item.name}</Text>
-      <Text>{item.price}</Text>
+      <Text>{'$'.repeat(item.price_range)}</Text>
       <Text>{'★'.repeat(item.rating)}</Text>
     </TouchableOpacity>
   );
@@ -50,17 +76,21 @@ const RestaurantsScreen = ({ navigation }) => {
           onValueChange={(itemValue) => setSelectedPrice(itemValue)}
         >
           <Picker.Item label="-- Select --" value="select" />
-          <Picker.Item label="$" value="$" />
-          <Picker.Item label="$$" value="$$" />
-          <Picker.Item label="$$$" value="$$$" />
+          <Picker.Item label="$" value="1" />
+          <Picker.Item label="$$" value="2" />
+          <Picker.Item label="$$$" value="3" />
         </Picker>
       </View>
-      <FlatList
-        data={filteredRestaurants}
-        renderItem={renderRestaurant}
-        keyExtractor={item => item.id.toString()}
-        numColumns={2}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#0000ff" />
+      ) : (
+        <FlatList
+          data={filteredRestaurants}
+          renderItem={renderRestaurant}
+          keyExtractor={item => item.id.toString()}
+          numColumns={2}
+        />
+      )}
     </View>
   );
 };
@@ -106,4 +136,3 @@ const styles = StyleSheet.create({
 });
 
 export default RestaurantsScreen;
-

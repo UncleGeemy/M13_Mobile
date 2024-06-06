@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-const OrderConfirmationModal = ({ visible, onClose, orderSummary }) => {
+const OrderConfirmationModal = ({ visible, onClose, orderSummary, totalPrice }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(null);
 
@@ -24,7 +24,7 @@ const OrderConfirmationModal = ({ visible, onClose, orderSummary }) => {
       <View key={item.id} style={styles.orderItem}>
         <Text style={styles.itemName}>{item.name}</Text>
         <Text style={styles.itemQuantity}>x{item.quantity}</Text>
-        <Text style={styles.itemPrice}>${(item.price * item.quantity).toFixed(2)}</Text>
+        <Text style={styles.itemPrice}>${(item.cost / 100 * item.quantity).toFixed(2)}</Text>
       </View>
     ));
   };
@@ -47,7 +47,7 @@ const OrderConfirmationModal = ({ visible, onClose, orderSummary }) => {
             {renderOrderSummary()}
             <View style={styles.totalContainer}>
               <Text style={styles.totalText}>TOTAL:</Text>
-              <Text style={styles.totalAmount}>${orderSummary.reduce((total, item) => total + item.price * item.quantity, 0).toFixed(2)}</Text>
+              <Text style={styles.totalAmount}>${totalPrice}</Text>
             </View>
           </View>
           {isSuccess === null ? (
