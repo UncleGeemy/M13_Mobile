@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback } from 'react';
 import { View, Text, FlatList, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import axios from 'axios';
+import { useFocusEffect } from '@react-navigation/native';
 
 const imageMapping = {
   1: require('../images/Restaurants/cuisineGreek.jpg'),
@@ -20,29 +21,31 @@ const RestaurantsScreen = ({ navigation }) => {
   const [selectedPrice, setSelectedPrice] = useState('select');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchRestaurants = async () => {
-      try {
-        const response = await axios.get(`${process.env.EXPO_PUBLIC_NGROK_URL}/api/restaurants`);
-        const dataWithImages = response.data.map(restaurant => ({
-          ...restaurant,
-          image: imageMapping[restaurant.id] || require('../images/RestaurantMenu.jpg'),
-        }));
-        setRestaurants(dataWithImages);
-        setLoading(false);
-      } catch (error) {
-        console.error(error);
-        setLoading(false);
-      }
-    };
+  const fetchRestaurants = async () => {
+    try {
+      const response = await axios.get(`${process.env.EXPO_PUBLIC_NGROK_URL}/api/restaurants`);
+      const dataWithImages = response.data.map(restaurant => ({
+        ...restaurant,
+        image: imageMapping[restaurant.id] || require('../images/RestaurantMenu.jpg'),
+      }));
+      setRestaurants(dataWithImages);
+      setLoading(false);
+    } catch (error) {
+      console.error(error);
+      setLoading(false);
+    }
+  };
 
-    fetchRestaurants();
-  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      fetchRestaurants();
+    }, [])
+  );
 
   const filteredRestaurants = restaurants.filter(restaurant => {
     return (
       (selectedRating === 'select' || restaurant.rating === parseInt(selectedRating)) &&
-      (selectedPrice === 'select' || restaurant.price_range === selectedPrice)
+      (selectedPrice === 'select' || restaurant.price_range === parseInt(selectedPrice))
     );
   });
 
@@ -108,9 +111,9 @@ const styles = StyleSheet.create({
   },
   picker: {
     flex: 1,
-    height: 50,
-    backgroundColor: '#f2f2f2',
-    borderRadius: 5,
+    height: 40,
+    backgroundColor: '#f05d5e',
+    borderRadius: 10,
     marginHorizontal: 5,
   },
   card: {

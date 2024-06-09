@@ -5,6 +5,12 @@ import { Ionicons } from '@expo/vector-icons';
 const OrderHistoryModal = ({ visible, order, onClose }) => {
   if (!order) return null;
 
+  const calculateTotal = () => {
+    if (!order.products) return '0.00';
+    const total = order.products.reduce((total, item) => total + (item.unit_cost * item.quantity), 0);
+    return (total / 100).toFixed(2);
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -15,25 +21,25 @@ const OrderHistoryModal = ({ visible, order, onClose }) => {
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
           <View style={styles.modalHeader}>
-            <Text style={styles.modalTitle}>{order.name}</Text>
+            <Text style={styles.modalTitle}>{order.restaurant_name}</Text>
             <TouchableOpacity onPress={onClose}>
               <Ionicons name="close" size={24} color="black" />
             </TouchableOpacity>
           </View>
-          <Text style={styles.modalText}>Order Date:</Text>
+          <Text style={styles.modalText}>Order Date: {order.order_date}</Text>
           <Text style={styles.modalText}>Status: {order.status}</Text>
-          <Text style={styles.modalText}>Courier:</Text>
+          <Text style={styles.modalText}>Courier: {order.courier_name}</Text>
           <View style={styles.modalItems}>
-            {order.items.map((item, index) => (
+            {order.products && order.products.map((item, index) => (
               <View key={index} style={styles.itemRow}>
-                <Text style={[styles.itemText, { flex: 2 }]}>{item.name}</Text>
-                <Text style={[styles.itemText, { flex: 1, textAlign: 'center' }]}>x1</Text>
-                <Text style={[styles.itemText, { flex: 1, textAlign: 'right' }]}>${item.price.toFixed(2)}</Text>
+                <Text style={[styles.itemText, { flex: 2 }]}>{item.product_name}</Text>
+                <Text style={[styles.itemText, { flex: 1, textAlign: 'center' }]}>x{item.quantity}</Text>
+                <Text style={[styles.itemText, { flex: 1, textAlign: 'right' }]}>${(item.unit_cost / 100).toFixed(2)}</Text>
               </View>
             ))}
           </View>
           <Text style={styles.modalTotal}>
-            TOTAL: ${order.items.reduce((total, item) => total + item.price, 0).toFixed(2)}
+            TOTAL: ${calculateTotal()}
           </Text>
         </View>
       </View>
@@ -101,6 +107,5 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-end',
   },
 });
-
 
 export default OrderHistoryModal;

@@ -1,20 +1,32 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import OrderHistoryModal from '../modals/OrderHistoryModal.js';
-
-const orders = [
-  { id: 1, name: 'Sweet Dragon', status: 'PENDING', items: [{ name: 'Cheeseburger', price: 0.50 }, { name: 'Scotch Eggs', price: 20.25 }] },
-  // Add other orders as needed
-];
+import useUserContext from '../shared/UserContext';
 
 const OrderHistoryScreen = () => {
+  const [orders, setOrders] = useState([]);
   const [modalVisible, setModalVisible] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  const { user } = useUserContext();
+
+  useEffect(() => {
+    fetchOrders();
+  }, []);
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_NGROK_URL}/api/orders?id=${user.customerID}&type=${user.userType}`);
+      const data = await response.json();
+      setOrders(data);
+    } catch (error) {
+      console.error('Error fetching orders:', error);
+    }
+  };
 
   const renderOrder = ({ item }) => (
     <View style={styles.orderRow}>
-      <Text style={styles.orderText}>{item.name}</Text>
+      <Text style={styles.orderText}>{item.restaurant_name}</Text>
       <Text style={styles.orderText}>{item.status}</Text>
       <TouchableOpacity 
         style={styles.viewButton} 

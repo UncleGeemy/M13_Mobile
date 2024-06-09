@@ -1,22 +1,72 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Modal, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import useUserContext from '../shared/UserContext';
 
-const OrderConfirmationModal = ({ visible, onClose, orderSummary, totalPrice }) => {
+const OrderConfirmationModal = ({ visible, onClose, orderSummary, totalPrice, restaurant_id }) => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [isSuccess, setIsSuccess] = useState(null);
+  const { user } = useUserContext();
 
-  const handleOrderConfirmation = () => {
+  useEffect(() => {
+    let timer;
+    if (isSuccess) {
+      timer = setTimeout(() => {
+        handleClose();
+      }, 2000);
+    }
+    return () => clearTimeout(timer);
+  }, [isSuccess]);
+
+  const handleOrderConfirmation = async () => {
     setIsProcessing(true);
     setIsSuccess(null);
 
-    // Simulate an API call
-    setTimeout(() => {
-      // Simulate success or failure
-      const success = Math.random() > 0.5;
+    console.log(user);
+    console.log(restaurant_id);
+
+    const orderDetails = {
+      customer_id: user.customerID,
+      restaurant_id: restaurant_id,
+      products: orderSummary,
+      total_cost: totalPrice,
+    };
+
+    try {
+      const response = await fetch(`${process.env.EXPO_PUBLIC_NGROK_URL}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(orderDetails),
+      });
+
+      const responseData = await response.json(); // Parse response body
+      console.log('Response status:', response.status); // Log response status
+      console.log('Response data:', responseData); // Log response data
+      console.log('Order details:', orderDetails); // Log order details
+
+      if (response.ok) {
+        setIsSuccess(true);
+      } else {
+        setIsSuccess(false);
+      }
+    } catch (error) {
+      console.error('Error confirming order:', error);
+      setIsSuccess(false);
+    } finally {
       setIsProcessing(false);
-      setIsSuccess(success);
-    }, 2000);
+    }
+  };
+
+  const handleClose = () => {
+    resetState();
+    onClose();
+  };
+
+  const resetState = () => {
+    setIsSuccess(null);
+    setIsProcessing(false);
   };
 
   const renderOrderSummary = () => {
@@ -34,12 +84,12 @@ const OrderConfirmationModal = ({ visible, onClose, orderSummary, totalPrice }) 
       transparent
       animationType="slide"
       visible={visible}
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View style={styles.modalContainer}>
         <View style={styles.modalContent}>
           <Text style={styles.modalTitle}>Order Confirmation</Text>
-          <TouchableOpacity style={styles.closeButton} onPress={onClose}>
+          <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
             <Ionicons name="close" size={24} color="black" />
           </TouchableOpacity>
           <View style={styles.orderSummary}>
@@ -57,7 +107,7 @@ const OrderConfirmationModal = ({ visible, onClose, orderSummary, totalPrice }) 
               onPress={handleOrderConfirmation}
             >
               {isProcessing ? (
-                <Text style={styles.confirmButtonText}>Processing Order...</Text>
+                <ActivityIndicator size="small" color="#fff" />
               ) : (
                 <Text style={styles.confirmButtonText}>Confirm Order</Text>
               )}
@@ -71,6 +121,12 @@ const OrderConfirmationModal = ({ visible, onClose, orderSummary, totalPrice }) 
             <View style={styles.failureContainer}>
               <Ionicons name="close-circle" size={50} color="red" />
               <Text style={styles.failureMessage}>Your order was not processed successfully. Please try again.</Text>
+              <TouchableOpacity
+                style={styles.tryAgainButton}
+                onPress={resetState}
+              >
+                <Text style={styles.tryAgainButtonText}>Try Again</Text>
+              </TouchableOpacity>
             </View>
           )}
         </View>
@@ -169,6 +225,17 @@ const styles = StyleSheet.create({
     marginTop: 10,
     fontSize: 16,
     color: 'red',
+  },
+  tryAgainButton: {
+    backgroundColor: '#ff6347',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  tryAgainButtonText: {
+    fontSize: 16,
+    color: 'white',
   },
 });
 

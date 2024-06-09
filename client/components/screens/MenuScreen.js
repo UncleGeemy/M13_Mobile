@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, Image, TouchableOpacity, StyleSheet, FlatList, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons'; 
 import OrderConfirmationModal from '../modals/OrderConfirmationModal';
+import useUserContext from '../shared/UserContext';
 
 const MenuScreen = ({ route }) => {
   const { restaurantId } = route.params;
@@ -10,6 +11,7 @@ const MenuScreen = ({ route }) => {
   const [quantities, setQuantities] = useState({});
   const [modalVisible, setModalVisible] = useState(false);
   const [loading, setLoading] = useState(true);
+  const { user } = useUserContext();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,7 +94,7 @@ const MenuScreen = ({ route }) => {
   };
 
   const getStarRating = (rating) => {
-    return "⭐️".repeat(rating);
+    return "★".repeat(rating);
   };
 
   if (loading) {
@@ -130,6 +132,8 @@ const MenuScreen = ({ route }) => {
         onClose={() => setModalVisible(false)}
         orderSummary={orderSummary}
         totalPrice={totalPrice()}
+        customer_id={user.user_id} 
+        restaurant_id={restaurantId} 
       />
     </View>
   );

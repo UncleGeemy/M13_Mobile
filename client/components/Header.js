@@ -22,7 +22,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     backgroundColor: '#fff',
     padding: 10,
-    borderBottomWidth: 1,
+    borderBottomWidth: 4,
     borderBottomColor: '#ddd',
   },
   logo: {
